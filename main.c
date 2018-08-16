@@ -77,16 +77,16 @@ static void on_keyboard(unsigned char key,int x,int y){
   case 'a':
   case 'A':
     curr_X -= v_x;
-    // if (curr_X <= -(1 - 0.1 / 2) ) {
-    //   curr_X = 1 - 0.1 / 2;
-    // }
+    if (curr_X <= -8) {
+      curr_X = -8;
+    }
     break;
   case 'd':
   case 'D':
     curr_X += v_x;
-    // if (curr_X >= 1 - 0.1 / 2) {
-    //    curr_X = -(1 - 0.1 / 2);
-    // }
+    if (curr_X >= 8){
+       curr_X = 8;
+    }
 
   }
 
@@ -97,7 +97,7 @@ static void on_timer(int value){
   if(value!=TIMER_ID)
     return;
 
-  // azuriramo koordinate centra kvadrata
+  // azuriramo koordinate igraca
   curr_Y += v_y;
   if (curr_Y <= -8){
       v_y *= -1;
@@ -151,14 +151,6 @@ static void on_display(void){
 
   //crtamo igraca
   draw_player();
-
-  // glPushMatrix();
-  // glTranslatef(0,-8,0);
-  // glColor3ub(11,11,11);
-  // glScalef(20,1,1);
-  //
-  // glutWireCube(1);
-  // glPopMatrix();
 
   //Menja se slika na ekranu
   glutSwapBuffers();
