@@ -8,7 +8,6 @@
 /* Dimenzije prozora */
 static int window_width, window_height;
 
-const static float size = 0.1; // Velicina kvadrata
 static float curr_X,curr_Y; // tekuce koordinate centra kvadrata
 static float v_x,v_y; //smer kretanja
 static int animation_ongoing; //fleg koji pokazduje da li je animacia u toku
@@ -37,8 +36,8 @@ int main(int argc,char** argv){
 
 
   //na pocetku postavljamo igraca na sredinu poda
-  curr_X = -(1 - size / 2)/20;
-  curr_Y = -(1 - size / 2);
+  curr_X = 0;
+  curr_Y = -8;
 
   //inicijalizacija smera kretanja
   v_x = MOVEMENT_SPEED;
@@ -78,16 +77,16 @@ static void on_keyboard(unsigned char key,int x,int y){
   case 'a':
   case 'A':
     curr_X -= v_x;
-    if (curr_X <= -(1 - size / 2) ) {
-      curr_X = 1 - size / 2;
-    }
+    // if (curr_X <= -(1 - 0.1 / 2) ) {
+    //   curr_X = 1 - 0.1 / 2;
+    // }
     break;
   case 'd':
   case 'D':
     curr_X += v_x;
-    if (curr_X >= 1 - size / 2) {
-       curr_X = -(1 - size / 2);
-    }
+    // if (curr_X >= 1 - 0.1 / 2) {
+    //    curr_X = -(1 - 0.1 / 2);
+    // }
 
   }
 
@@ -100,10 +99,10 @@ static void on_timer(int value){
 
   // azuriramo koordinate centra kvadrata
   curr_Y += v_y;
-  if (curr_Y <= -(1 - size / 2)){
+  if (curr_Y <= -8){
       v_y *= -1;
   }
-  if (curr_Y >= ((1 - size / 2)/5)){
+  if (curr_Y >= -5){
      v_y *= -1;
   }
 
@@ -144,7 +143,7 @@ static void on_display(void){
   /* Podesava se vidna tacka. */
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  gluLookAt(0, 0, 10, 0, 0, 0, 0, 1, 0);
+  gluLookAt(15, 0, 0, 0, 0, 0, 0, 1, 0);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -152,6 +151,14 @@ static void on_display(void){
 
   //crtamo igraca
   draw_player();
+
+  // glPushMatrix();
+  // glTranslatef(0,-8,0);
+  // glColor3ub(11,11,11);
+  // glScalef(20,1,1);
+  //
+  // glutWireCube(1);
+  // glPopMatrix();
 
   //Menja se slika na ekranu
   glutSwapBuffers();
