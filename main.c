@@ -5,15 +5,19 @@
 #define TIMER_ID 0
 #define TIMER_INTERVAL 20
 #define MOVEMENT_SPEED 0.03 // brzina kratanja
+/* Dimenzije prozora */
+static int window_width, window_height;
 
 const static float size = 0.1; // Velicina kvadrata
 static float curr_X,curr_Y; // tekuce koordinate centra kvadrata
 static float v_x,v_y; //smer kretanja
 static int animation_ongoing; //fleg koji pokazduje da li je animacia u toku
+static void draw_player();
 
 // Deklaracije callback funkcija
 static void on_keyboard(unsigned char key,int x, int y);
 static void on_timer(int value);
+static void on_reshape(int width, int height);
 static void on_display(void);
 
 int main(int argc,char** argv){
@@ -28,6 +32,7 @@ int main(int argc,char** argv){
 
   //Registruju se funkcije za obradu dogadjaja
   glutKeyboardFunc(on_keyboard);
+  glutReshapeFunc(on_reshape);
   glutDisplayFunc(on_display);
 
 
@@ -111,18 +116,42 @@ static void on_timer(int value){
   }
 }
 
+static void on_reshape(int width, int height)
+{
+    /* Pamte se sirina i visina prozora. */
+    window_width = width;
+    window_height = height;
+}
+
+static void draw_player(){
+    glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
+    glEnable(GL_COLOR_MATERIAL);
+    glPushMatrix();
+    glTranslatef(curr_X,curr_Y,0);
+    glColor4f(1,0,0,0);
+    glutSolidCube(1);
+    glPopMatrix();
+}
+
+
 static void on_display(void){
   //Postavlja se boja piksela na zadatu boju pozadine
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  /* Crta se kvadrat na odgovarajucoj poziciji. */
-  glColor3f(1, 0, 0);
-  glBegin(GL_POLYGON);
-      glVertex3f(curr_X - size / 2, curr_Y - size / 2, 0);
-      glVertex3f(curr_X + size / 2, curr_Y - size / 2, 0);
-      glVertex3f(curr_X + size / 2, curr_Y + size / 2, 0);
-      glVertex3f(curr_X - size / 2, curr_Y + size / 2, 0);
-  glEnd();
+  /* Podesava se viewport. */
+  glViewport(0, 0, window_width, window_height);
+
+  /* Podesava se vidna tacka. */
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  gluLookAt(0, 0, 10, 0, 0, 0, 0, 1, 0);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective(60, 1, 1, 100);
+
+  //crtamo igraca
+  draw_player();
 
   //Menja se slika na ekranu
   glutSwapBuffers();
