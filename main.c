@@ -11,7 +11,8 @@ static int window_width, window_height;
 static float curr_X,curr_Y; // tekuce koordinate centra kvadrata
 static float v_x,v_y; //smer kretanja
 static int animation_ongoing; //fleg koji pokazduje da li je animacia u toku
-static void draw_player();
+static void draw_player(void);
+static void setup_lights();
 
 // Deklaracije callback funkcija
 static void on_keyboard(unsigned char key,int x, int y);
@@ -127,9 +128,49 @@ static void draw_player(){
     glEnable(GL_COLOR_MATERIAL);
     glPushMatrix();
     glTranslatef(curr_X,curr_Y,0);
-    glColor4f(1,0,0,0);
+  //  glColor4f(1,0,0,0);
     glutSolidCube(1);
     glPopMatrix();
+}
+
+static void setup_lights(void){
+  /* Pozicija svetla (u pitanju je direkcionalno svetlo). */
+  GLfloat light_position[] = { 1, 1, 1, 0 };
+
+  /* Ambijentalna boja svetla. */
+  GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1 };
+
+  /* Difuzna boja svetla. */
+  GLfloat light_diffuse[] = { 1, 0.3, 0.3, 1 };
+
+  /* Spekularna boja svetla. */
+  GLfloat light_specular[] = { 0.9, 0.9, 0.9, 1 };
+
+  /* Koeficijenti ambijentalne refleksije materijala. */
+  GLfloat ambient_coeffs[] = { 1.0, 0.1, 0.1, 1 };
+
+  /* Koeficijenti difuzne refleksije materijala. */
+  GLfloat diffuse_coeffs[] = { 0.0, 0.0, 0.8, 1 };
+
+  /* Koeficijenti spekularne refleksije materijala. */
+  GLfloat specular_coeffs[] = { 1, 1, 1, 1 };
+
+  /* Koeficijent glatkosti materijala. */
+  GLfloat shininess = 20;
+
+  // Ukljucujemo osvetljenje i podesavamo parametre
+  glEnable(GL_LIGHTING);
+  glEnable(GL_LIGHT0);
+  glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+  glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+  glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+  glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+
+  //Podesvamo parametre materijala
+  glMaterialfv(GL_FRONT, GL_AMBIENT, ambient_coeffs);
+  glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_coeffs);
+  glMaterialfv(GL_FRONT, GL_SPECULAR, specular_coeffs);
+  glMaterialf(GL_FRONT, GL_SHININESS, shininess);
 }
 
 
@@ -148,6 +189,9 @@ static void on_display(void){
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   gluPerspective(60, 1, 1, 100);
+
+  //podesvamo svetla
+  setup_lights();
 
   //crtamo igraca
   draw_player();
