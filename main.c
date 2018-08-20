@@ -8,11 +8,13 @@
 /* Dimenzije prozora */
 static int window_width, window_height;
 
-static float curr_X,curr_Y; // tekuce koordinate centra kvadrata
+static float player_x,player_y; // tekuce koordinate centra kvadrata
+float self_rotate;
 static float v_x,v_y; //smer kretanja
 static int animation_ongoing; //fleg koji pokazduje da li je animacia u toku
 static void draw_player(void);
-static void setup_lights();
+static void draw_platform(int number);
+static void setup_lights(void);
 
 // Deklaracije callback funkcija
 static void on_keyboard(unsigned char key,int x, int y);
@@ -37,8 +39,10 @@ int main(int argc,char** argv){
 
 
   //na pocetku postavljamo igraca na sredinu poda
-  curr_X = 0;
-  curr_Y = -8;
+  player_x = 0;
+  player_y = -8;
+
+  self_rotate=0;
 
   //inicijalizacija smera kretanja
   v_x = MOVEMENT_SPEED;
@@ -48,7 +52,7 @@ int main(int argc,char** argv){
   animation_ongoing = 0;
 
   //OpenGL inicijalizacija
-  glClearColor(0.75,0.75,0.75,0);
+  glClearColor(0.75,0.75,1,0);
   glEnable(GL_DEPTH_TEST);
 
   glutMainLoop();
@@ -77,16 +81,16 @@ static void on_keyboard(unsigned char key,int x,int y){
     break;
   case 'a':
   case 'A':
-    curr_X -= v_x;
-    if (curr_X <= -8) {
-      curr_X = -8;
+    player_x -= v_x;
+    if (player_x <= -8) {
+      player_x = -8;
     }
     break;
   case 'd':
   case 'D':
-    curr_X += v_x;
-    if (curr_X >= 8){
-       curr_X = 8;
+    player_x += v_x;
+    if (player_x >= 8){
+       player_x = 8;
     }
 
   }
@@ -99,11 +103,11 @@ static void on_timer(int value){
     return;
 
   // azuriramo koordinate igraca
-  curr_Y += v_y;
-  if (curr_Y <= -8){
+  player_y += v_y;
+  if (player_y <= -8){
       v_y *= -1;
   }
-  if (curr_Y >= -5){
+  if (player_y >= -5){
      v_y *= -1;
   }
 
@@ -123,14 +127,33 @@ static void on_reshape(int width, int height)
     window_height = height;
 }
 
-static void draw_player(){
+static void draw_player(void){
     glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
     glEnable(GL_COLOR_MATERIAL);
     glPushMatrix();
-    glTranslatef(curr_X,curr_Y,0);
-  //  glColor4f(1,0,0,0);
+    glTranslatef(player_x,player_y,0);
+    glRotatef(self_rotate,0,0,1);
+    self_rotate += 1;
+    glScalef(1,1,1);
     glutSolidCube(1);
     glPopMatrix();
+}
+
+static void draw_platform(int number){ //TODO: random da se generisu koordinate
+  glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
+  glEnable(GL_COLOR_MATERIAL);
+  int platform_x = -4;
+  int platform_y = -6.7;
+  int i;
+  for(i=0;i<number;i++){
+    glPushMatrix();
+    platform_x += i;
+    platform_y += i;
+    glTranslatef(platform_x,platform_y,0);
+    glScalef(4,0.2,1);
+    glutSolidCube(1);
+    glPopMatrix();
+  }
 }
 
 static void setup_lights(void){
@@ -138,7 +161,7 @@ static void setup_lights(void){
   GLfloat light_position[] = { 1, 1, 1, 0 };
 
   /* Ambijentalna boja svetla. */
-  GLfloat light_ambient[] = { 0.0, 0.0, 0.0, 1 };
+  GLfloat light_ambient[] = { 0.5, 0.0, 0.0, 1 };
 
   /* Difuzna boja svetla. */
   GLfloat light_diffuse[] = { 1, 0.3, 0.3, 1 };
@@ -174,8 +197,8 @@ static void setup_lights(void){
 }
 
 
+//Postavlja se boja piksela na zadatu boju pozadine
 static void on_display(void){
-  //Postavlja se boja piksela na zadatu boju pozadine
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   /* Podesava se viewport. */
@@ -190,11 +213,16 @@ static void on_display(void){
   glLoadIdentity();
   gluPerspective(60, 1, 1, 100);
 
+
   //podesvamo svetla
   setup_lights();
 
+  //postavljamo platforme
+  draw_platform(5);
+
   //crtamo igraca
   draw_player();
+
 
   //Menja se slika na ekranu
   glutSwapBuffers();
