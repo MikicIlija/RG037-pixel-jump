@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <GL/glut.h>
+#include<stdio.h>
 
 #define TIMER_ID 0
 #define TIMER_INTERVAL 20
@@ -10,11 +11,25 @@ static int window_width, window_height;
 
 static float player_x,player_y; // tekuce koordinate centra kvadrata
 float self_rotate;
+float floor_y = -8;
 static float v_x,v_y; //smer kretanja
 static int animation_ongoing; //fleg koji pokazduje da li je animacia u toku
 static void draw_player(void);
 static void draw_platform(int number);
+static void init_platforms(int number);
 static void setup_lights(void);
+static void bounce_check(int plat_num);
+int number_of_platforms;
+
+
+typedef struct{
+  float plat_x;
+  float plat_y;
+}Platform;
+
+
+//inicijalizacija platformi
+Platform platforme[5];
 
 // Deklaracije callback funkcija
 static void on_keyboard(unsigned char key,int x, int y);
@@ -40,7 +55,7 @@ int main(int argc,char** argv){
 
   //na pocetku postavljamo igraca na sredinu poda
   player_x = 0;
-  player_y = -8;
+  player_y = floor_y;
 
   self_rotate=0;
 
@@ -54,6 +69,12 @@ int main(int argc,char** argv){
   //OpenGL inicijalizacija
   glClearColor(0.75,0.75,1,0);
   glEnable(GL_DEPTH_TEST);
+
+  number_of_platforms = 5; //pocetni broj platformi
+
+  //inicijalizujemo platforme
+  init_platforms(number_of_platforms);
+
 
   glutMainLoop();
 
@@ -104,11 +125,30 @@ static void on_timer(int value){
 
   // azuriramo koordinate igraca
   player_y += v_y;
-  if (player_y <= -8){
-      v_y *= -1;
+  // if (player_y <= floor_y){
+  //     v_y *= -1;
+  // }
+  int i;
+  for(i=0;i<number_of_platforms;i++){
+    bounce_check(i);
   }
-  if (player_y >= -5){
+  if (player_y >= floor_y+3){
+    if(v_y >=0){
      v_y *= -1;
+     printf("%f pozi\n",player_y);
+     printf("%s\n","DOLE!");
+   }
+     // printf("%f\n",floor_y);
+     // int i;
+     // for(i=0;i<numberOfPlatforms;i++){
+     // if(player_y >= platforme[i].plat_y){
+     //   if(player_x >= platforme[i].plat_x - 2 && player_x <= platforme[i].plat_x + 2){
+     //     floor_y = platforme[i].plat_y;
+     //     printf("%s\n","GORE!" );
+     //     v_y *= -1;
+     //   }
+     //   }
+     // }
   }
 
   // Ponovo iscrtavanje prozora
@@ -139,20 +179,45 @@ static void draw_player(void){
     glPopMatrix();
 }
 
+static void init_platforms(int number){
+  int i;
+  float init_plat_x = -3;
+  float init_plat_y = -7;
+  for(i=0;i<number;i++){
+    srand(time(NULL));
+    platforme[i].plat_x = init_plat_x + i * rand() % 14 ;
+    platforme[i].plat_y = init_plat_y + i*2;
+    printf("i:%d x:%f\n",i,platforme[i].plat_x);
+    printf("i:%d y:%f\n",i,platforme[i].plat_y);
+    printf("igrac:%f\n",player_x);
+  }
+}
+
 static void draw_platform(int number){ //TODO: random da se generisu koordinate
   glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
   glEnable(GL_COLOR_MATERIAL);
-  int platform_x = -4;
-  int platform_y = -6.7;
   int i;
   for(i=0;i<number;i++){
     glPushMatrix();
-    platform_x += i;
-    platform_y += i;
-    glTranslatef(platform_x,platform_y,0);
+    glTranslatef(platforme[i].plat_x,platforme[i].plat_y,0);
     glScalef(4,0.2,1);
     glutSolidCube(1);
     glPopMatrix();
+  }
+}
+
+void bounce_check(int plat_num){
+  float plat_x = platforme[plat_num].plat_x;
+  float plat_y = platforme[plat_num].plat_y;
+  if(player_y <= plat_y+0.5 && player_y >= plat_y-0.5){
+    if(player_x >= plat_x - 2 && player_x <= plat_x+2){
+      floor_y = plat_y;
+      printf("%s\n","GORE!" );
+      printf("%f\n",floor_y);
+      if(v_y <= 0){ //FIX
+        v_y *= -1;
+      }
+    }
   }
 }
 
@@ -216,6 +281,7 @@ static void on_display(void){
 
   //podesvamo svetla
   setup_lights();
+
 
   //postavljamo platforme
   draw_platform(5);
