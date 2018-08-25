@@ -1,3 +1,7 @@
+#define RED 1
+#define GREEN 2
+#define BLUE 3
+
 #include <stdlib.h>
 #include <time.h>
 #include <GL/glut.h>
@@ -5,7 +9,7 @@
 
 #define TIMER_ID 0
 #define TIMER_INTERVAL 20
-#define MOVEMENT_SPEED 0.03 // brzina kratanja
+#define MOVEMENT_SPEED 0.05 // brzina kratanja
 /* Dimenzije prozora */
 static int window_width, window_height;
 
@@ -20,11 +24,13 @@ static void init_platforms(int number);
 static void setup_lights(void);
 static void bounce_check(int plat_num);
 int number_of_platforms;
+static void progres(void);
 
 
 typedef struct{
   float plat_x;
   float plat_y;
+  int type; //GREEN BLUE RED
 }Platform;
 
 
@@ -104,14 +110,14 @@ static void on_keyboard(unsigned char key,int x,int y){
   case 'A':
     player_x -= v_x;
     if (player_x <= -8) {
-      player_x = -8;
+      player_x = 8;
     }
     break;
   case 'd':
   case 'D':
     player_x += v_x;
     if (player_x >= 8){
-       player_x = 8;
+       player_x = -8;
     }
 
   }
@@ -132,24 +138,18 @@ static void on_timer(int value){
   for(i=0;i<number_of_platforms;i++){
     bounce_check(i);
   }
-  if (player_y >= floor_y+3){
+  if (player_y >= floor_y+5){
     if(v_y >=0){
      v_y *= -1;
      printf("%f pozi\n",player_y);
      printf("%s\n","DOLE!");
    }
-     // printf("%f\n",floor_y);
-     // int i;
-     // for(i=0;i<numberOfPlatforms;i++){
-     // if(player_y >= platforme[i].plat_y){
-     //   if(player_x >= platforme[i].plat_x - 2 && player_x <= platforme[i].plat_x + 2){
-     //     floor_y = platforme[i].plat_y;
-     //     printf("%s\n","GORE!" );
-     //     v_y *= -1;
-     //   }
-     //   }
-     // }
   }
+  if(player_y >= 1 && v_y >= 0){
+      progres();
+  }
+
+
 
   // Ponovo iscrtavanje prozora
   glutPostRedisplay();
@@ -183,22 +183,41 @@ static void init_platforms(int number){
   int i;
   float init_plat_x = -3;
   float init_plat_y = -7;
+  srand(time(NULL));
+  int r;
   for(i=0;i<number;i++){
-    srand(time(NULL));
-    platforme[i].plat_x = init_plat_x + i * rand() % 14 ;
-    platforme[i].plat_y = init_plat_y + i*2;
+    r = rand()%100;
+    if(r <= 33){
+      platforme[i].type = 1;
+    } else if(r <= 66){
+      platforme[i].type = 2;
+    }
+    else{
+      platforme[i].type = 3;
+    }
+    platforme[i].plat_x = init_plat_x + i * rand() % 7 ;
+    platforme[i].plat_y = init_plat_y + i*3;
     printf("i:%d x:%f\n",i,platforme[i].plat_x);
     printf("i:%d y:%f\n",i,platforme[i].plat_y);
     printf("igrac:%f\n",player_x);
   }
 }
 
-static void draw_platform(int number){ //TODO: random da se generisu koordinate
+static void draw_platform(int number){
   glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
   glEnable(GL_COLOR_MATERIAL);
   int i;
   for(i=0;i<number;i++){
     glPushMatrix();
+    if(platforme[i].type == 1){
+      glColor4f(1,0,0,1);
+    }
+    else if(platforme[i].type == 2){
+      glColor4f(0,1,0,1);
+    }
+    else{
+      glColor4f(0,0,1,1);
+    }
     glTranslatef(platforme[i].plat_x,platforme[i].plat_y,0);
     glScalef(4,0.2,1);
     glutSolidCube(1);
@@ -211,12 +230,22 @@ void bounce_check(int plat_num){
   float plat_y = platforme[plat_num].plat_y;
   if(player_y <= plat_y+0.5 && player_y >= plat_y-0.5){
     if(player_x >= plat_x - 2 && player_x <= plat_x+2){
-      floor_y = plat_y;
-      printf("%s\n","GORE!" );
-      printf("%f\n",floor_y);
       if(v_y <= 0){ //FIX
+        floor_y = plat_y;
+        printf("%s\n","GORE!" );
+        printf("%f\n",floor_y);
         v_y *= -1;
       }
+    }
+  }
+}
+
+static void progres(){
+  int i;
+  for(i=0;i<number_of_platforms;i++){
+    platforme[i].plat_y -= 0.05;
+    if(platforme[i].plat_y <= -8){
+      platforme[i].plat_y += 16;
     }
   }
 }
@@ -284,7 +313,7 @@ static void on_display(void){
 
 
   //postavljamo platforme
-  draw_platform(5);
+  draw_platform(number_of_platforms);
 
   //crtamo igraca
   draw_player();
