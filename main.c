@@ -181,7 +181,7 @@ static void draw_player(void){
 
 static void init_platforms(int number){
   int i;
-  float init_plat_x = -3;
+  float init_plat_x = -7;
   float init_plat_y = -7;
   srand(time(NULL));
   int r;
@@ -195,7 +195,7 @@ static void init_platforms(int number){
     else{
       platforme[i].type = 3;
     }
-    platforme[i].plat_x = init_plat_x + i * rand() % 7 ;
+    platforme[i].plat_x = init_plat_x + rand() % 14 ;
     platforme[i].plat_y = init_plat_y + i*3;
     printf("i:%d x:%f\n",i,platforme[i].plat_x);
     printf("i:%d y:%f\n",i,platforme[i].plat_y);
@@ -210,7 +210,7 @@ static void draw_platform(int number){
   for(i=0;i<number;i++){
     glPushMatrix();
     if(platforme[i].type == 1){
-      glColor4f(1,0,0,1);
+        glColor4f(1,0,0,1);
     }
     else if(platforme[i].type == 2){
       glColor4f(0,1,0,1);
@@ -228,7 +228,7 @@ static void draw_platform(int number){
 void bounce_check(int plat_num){
   float plat_x = platforme[plat_num].plat_x;
   float plat_y = platforme[plat_num].plat_y;
-  if(player_y <= plat_y+0.5 && player_y >= plat_y-0.5){
+  if(player_y <= plat_y+0.7 && player_y >= plat_y-0.7){
     if(player_x >= plat_x - 2 && player_x <= plat_x+2){
       if(v_y <= 0){ //FIX
         floor_y = plat_y;
@@ -245,7 +245,7 @@ static void progres(){
   for(i=0;i<number_of_platforms;i++){
     platforme[i].plat_y -= 0.05;
     if(platforme[i].plat_y <= -8){
-      platforme[i].plat_y += 16;
+      platforme[i].plat_y += 14;
     }
   }
 }
