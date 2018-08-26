@@ -1,7 +1,3 @@
-#define RED 1
-#define GREEN 2
-#define BLUE 3
-
 #include <stdlib.h>
 #include <time.h>
 #include <GL/glut.h>
@@ -142,7 +138,7 @@ static void on_timer(int value){
   int i;
   for(i=0;i<number_of_platforms;i++){
     if(bounce_check(i) == 1){
-      score+=platforme[i].type;
+      score+=platforme[i].type+1;
       printf("SCORE:%d\n",score);
     };
   }
@@ -153,7 +149,7 @@ static void on_timer(int value){
      // printf("%s\n","DOLE!");
    }
   }
-  if(player_y >= -1 && v_y >= 0){
+  if(player_y >= -6 && v_y >= 0){
       progres();
   }
   if(player_y < -10){
@@ -183,7 +179,7 @@ static void draw_player(void){
     glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
     glEnable(GL_COLOR_MATERIAL);
     glPushMatrix();
-    glColor4f(1,0.2,0.2,1);
+    glColor4f(1,1,0,1);
     glTranslatef(player_x,player_y,0);
     glRotatef(self_rotate,0,0,1);
     self_rotate += 1;
@@ -196,22 +192,23 @@ static void draw_player(void){
 
 static void init_platforms(int number){
   int i;
-  float init_plat_x = -7;
-  float init_plat_y = -7;
   srand(time(NULL));
+  platforme[0].plat_x = -7 + rand() % 14;
+  platforme[0].plat_y = -5;
+  platforme[0].type = rand() % 3;
   int r;
-  for(i=0;i<number;i++){
+  for(i=1;i<number;i++){
     r = rand()%100;
     if(r <= 33){
-      platforme[i].type = 1;
+      platforme[i].type = 0;
     } else if(r <= 66){
-      platforme[i].type = 2;
+      platforme[i].type = 1;
     }
     else{
-      platforme[i].type = 3;
+      platforme[i].type = 2;
     }
-    platforme[i].plat_x = init_plat_x + rand() % 14 ;
-    platforme[i].plat_y = init_plat_y + i*3;
+    platforme[i].plat_x = -7 + rand() % 14 ;
+    platforme[i].plat_y =  platforme[i-1].plat_y + 5;
     // printf("i:%d x:%f\n",i,platforme[i].plat_x);
     // printf("i:%d y:%f\n",i,platforme[i].plat_y);
     // printf("igrac:%f\n",player_x);
@@ -225,14 +222,14 @@ static void draw_platform(int number){
   for(i=0;i<number;i++){
     glPushMatrix();
     GLfloat diffuse_coeffs[4];
-    if(platforme[i].type == 1){
+    if(platforme[i].type == 0){
       // diffuse_coeffs[0] = 1;
-      // diffuse_coeffs[1] = 0.1;
+      // diffuse_coyeffs[1] = 0.1;
       // diffuse_coeffs[2] = 0.1;
       // diffuse_coeffs[3] = 1;
       glColor4f(1,0.2,0.2,1);
     }
-    else if(platforme[i].type == 2){
+    else if(platforme[i].type == 1){
       // diffuse_coeffs[0] = 0.1;
       // diffuse_coeffs[1] = 1;
       // diffuse_coeffs[2] = 0.1;
@@ -259,7 +256,7 @@ int bounce_check(int plat_num){
   float plat_y = platforme[plat_num].plat_y;
   if(player_y <= plat_y+0.7 && player_y >= plat_y-0.7){
     if(player_x >= plat_x - 2 && player_x <= plat_x+2){
-      if(v_y <= 0){ //FIX
+      if(v_y <= 0 && plat_y <= 4){ //FIX
         floor_y = plat_y;
         // printf("%s\n","GORE!" );
         // printf("%f\n",floor_y);
@@ -273,11 +270,13 @@ int bounce_check(int plat_num){
 
 static void progres(){
   int i;
+  srand(time(NULL));
   for(i=0;i<number_of_platforms;i++){
     platforme[i].plat_y -= 0.1;
     if(platforme[i].plat_y <= -8){
       platforme[i].plat_x = -7 + rand()%14;
-      platforme[i].plat_y += 18;
+      platforme[i].plat_y += 25 ;
+      platforme[i].type = rand() % 3;
     }
   }
 }
