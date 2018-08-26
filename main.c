@@ -9,7 +9,7 @@
 
 #define TIMER_ID 0
 #define TIMER_INTERVAL 20
-#define MOVEMENT_SPEED 0.05 // brzina kratanja
+#define MOVEMENT_SPEED 0.1 // brzina kratanja
 /* Dimenzije prozora */
 static int window_width, window_height;
 
@@ -22,9 +22,10 @@ static void draw_player(void);
 static void draw_platform(int number);
 static void init_platforms(int number);
 static void setup_lights(void);
-static void bounce_check(int plat_num);
+static int bounce_check(int plat_num);
 int number_of_platforms;
 static void progres(void);
+int score;
 
 
 typedef struct{
@@ -53,7 +54,10 @@ int main(int argc,char** argv){
   glutInitWindowPosition(100,100);
   glutCreateWindow(argv[0]);
 
-  //Registruju se funkcije za obradu dogadjaja
+  //Registruju se funkcije za       // diffuse_coeffs[0] = 0.1;
+      // diffuse_coeffs[1] = 0.1;
+      // diffuse_coeffs[2] = 1;
+      // diffuse_coeffs[3] = 1;;obradu dogadjaja
   glutKeyboardFunc(on_keyboard);
   glutReshapeFunc(on_reshape);
   glutDisplayFunc(on_display);
@@ -77,6 +81,7 @@ int main(int argc,char** argv){
   glEnable(GL_DEPTH_TEST);
 
   number_of_platforms = 5; //pocetni broj platformi
+  score = 0; //inicijalizujemo rezultat
 
   //inicijalizujemo platforme
   init_platforms(number_of_platforms);
@@ -136,17 +141,24 @@ static void on_timer(int value){
   // }
   int i;
   for(i=0;i<number_of_platforms;i++){
-    bounce_check(i);
+    if(bounce_check(i) == 1){
+      score+=platforme[i].type;
+      printf("SCORE:%d\n",score);
+    };
   }
   if (player_y >= floor_y+5){
     if(v_y >=0){
      v_y *= -1;
-     printf("%f pozi\n",player_y);
-     printf("%s\n","DOLE!");
+     // printf("%f pozi\n",player_y);
+     // printf("%s\n","DOLE!");
    }
   }
-  if(player_y >= 1 && v_y >= 0){
+  if(player_y >= -1 && v_y >= 0){
       progres();
+  }
+  if(player_y < -10){
+    printf("%s\n","GAME OVER!");
+    animation_ongoing = 0;
   }
 
 
@@ -171,11 +183,14 @@ static void draw_player(void){
     glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
     glEnable(GL_COLOR_MATERIAL);
     glPushMatrix();
+    glColor4f(1,0.2,0.2,1);
     glTranslatef(player_x,player_y,0);
     glRotatef(self_rotate,0,0,1);
     self_rotate += 1;
     glScalef(1,1,1);
     glutSolidCube(1);
+    // GLfloat diffuse_coeffs[] = {1,1,1,0};
+    // glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_coeffs);
     glPopMatrix();
 }
 
@@ -197,9 +212,9 @@ static void init_platforms(int number){
     }
     platforme[i].plat_x = init_plat_x + rand() % 14 ;
     platforme[i].plat_y = init_plat_y + i*3;
-    printf("i:%d x:%f\n",i,platforme[i].plat_x);
-    printf("i:%d y:%f\n",i,platforme[i].plat_y);
-    printf("igrac:%f\n",player_x);
+    // printf("i:%d x:%f\n",i,platforme[i].plat_x);
+    // printf("i:%d y:%f\n",i,platforme[i].plat_y);
+    // printf("igrac:%f\n",player_x);
   }
 }
 
@@ -209,15 +224,29 @@ static void draw_platform(int number){
   int i;
   for(i=0;i<number;i++){
     glPushMatrix();
+    GLfloat diffuse_coeffs[4];
     if(platforme[i].type == 1){
-        glColor4f(1,0,0,1);
+      // diffuse_coeffs[0] = 1;
+      // diffuse_coeffs[1] = 0.1;
+      // diffuse_coeffs[2] = 0.1;
+      // diffuse_coeffs[3] = 1;
+      glColor4f(1,0.2,0.2,1);
     }
     else if(platforme[i].type == 2){
-      glColor4f(0,1,0,1);
+      // diffuse_coeffs[0] = 0.1;
+      // diffuse_coeffs[1] = 1;
+      // diffuse_coeffs[2] = 0.1;
+      // diffuse_coeffs[3] = 1;
+      glColor4f(0.2,1,0.2,1);
     }
     else{
-      glColor4f(0,0,1,1);
+      // diffuse_coeffs[0] = 0.1;
+      // diffuse_coeffs[1] = 0.1;
+      // diffuse_coeffs[2] = 1;
+      // diffuse_coeffs[3] = 1;;
+      glColor4f(0.2,0.2,1,1);
     }
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_coeffs);
     glTranslatef(platforme[i].plat_x,platforme[i].plat_y,0);
     glScalef(4,0.2,1);
     glutSolidCube(1);
@@ -225,27 +254,30 @@ static void draw_platform(int number){
   }
 }
 
-void bounce_check(int plat_num){
+int bounce_check(int plat_num){
   float plat_x = platforme[plat_num].plat_x;
   float plat_y = platforme[plat_num].plat_y;
   if(player_y <= plat_y+0.7 && player_y >= plat_y-0.7){
     if(player_x >= plat_x - 2 && player_x <= plat_x+2){
       if(v_y <= 0){ //FIX
         floor_y = plat_y;
-        printf("%s\n","GORE!" );
-        printf("%f\n",floor_y);
+        // printf("%s\n","GORE!" );
+        // printf("%f\n",floor_y);
         v_y *= -1;
+        return 1;
       }
     }
   }
+  return 0;
 }
 
 static void progres(){
   int i;
   for(i=0;i<number_of_platforms;i++){
-    platforme[i].plat_y -= 0.05;
+    platforme[i].plat_y -= 0.1;
     if(platforme[i].plat_y <= -8){
-      platforme[i].plat_y += 14;
+      platforme[i].plat_x = -7 + rand()%14;
+      platforme[i].plat_y += 18;
     }
   }
 }
@@ -258,22 +290,19 @@ static void setup_lights(void){
   GLfloat light_ambient[] = { 0.5, 0.0, 0.0, 1 };
 
   /* Difuzna boja svetla. */
-  GLfloat light_diffuse[] = { 1, 0.3, 0.3, 1 };
+  GLfloat light_diffuse[] = { 0.3, 0.3, 0.3, 1 };
 
   /* Spekularna boja svetla. */
   GLfloat light_specular[] = { 0.9, 0.9, 0.9, 1 };
 
   /* Koeficijenti ambijentalne refleksije materijala. */
-  GLfloat ambient_coeffs[] = { 1.0, 0.1, 0.1, 1 };
-
-  /* Koeficijenti difuzne refleksije materijala. */
-  GLfloat diffuse_coeffs[] = { 0.0, 0.0, 0.8, 1 };
+  GLfloat ambient_coeffs[] = { 0.1, 0.1, 0.1, 1 };
 
   /* Koeficijenti spekularne refleksije materijala. */
-  GLfloat specular_coeffs[] = { 1, 1, 1, 1 };
+  GLfloat specular_coeffs[] = { .6, .6, .6, 1 };
 
   /* Koeficijent glatkosti materijala. */
-  GLfloat shininess = 20;
+  GLfloat shininess = 80;
 
   // Ukljucujemo osvetljenje i podesavamo parametre
   glEnable(GL_LIGHTING);
@@ -285,7 +314,6 @@ static void setup_lights(void){
 
   //Podesvamo parametre materijala
   glMaterialfv(GL_FRONT, GL_AMBIENT, ambient_coeffs);
-  glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_coeffs);
   glMaterialfv(GL_FRONT, GL_SPECULAR, specular_coeffs);
   glMaterialf(GL_FRONT, GL_SHININESS, shininess);
 }
@@ -311,13 +339,11 @@ static void on_display(void){
   //podesvamo svetla
   setup_lights();
 
-
-  //postavljamo platforme
-  draw_platform(number_of_platforms);
-
   //crtamo igraca
   draw_player();
 
+  //postavljamo platforme
+  draw_platform(number_of_platforms);
 
   //Menja se slika na ekranu
   glutSwapBuffers();
