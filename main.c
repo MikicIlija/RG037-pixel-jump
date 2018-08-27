@@ -22,7 +22,9 @@ static int bounce_check(int plat_num);
 int number_of_platforms;
 static void progres(void);
 int score;
-
+int rotate_flag = 0;
+int double_points = 0;
+int double_points_counter;
 
 typedef struct{
   float plat_x;
@@ -138,9 +140,25 @@ static void on_timer(int value){
   int i;
   for(i=0;i<number_of_platforms;i++){
     if(bounce_check(i) == 1){
-      score+=platforme[i].type+1;
-      printf("SCORE:%d\n",score);
-    };
+      if(double_points){
+        score+=(platforme[i].type+1)*2;
+        printf("SCORE:%d\n",score);
+        double_points--;
+      }else{
+        score+=platforme[i].type+1;
+        printf("SCORE:%d\n",score);
+      }
+      if(platforme[i].type == 2){
+        if(rotate_flag == 1){
+          rotate_flag = 0;
+        }
+        else{
+          rotate_flag = 1;
+        }
+      }else if(platforme[i].type == 1){
+        double_points = 5;
+      }
+    }
   }
   if (player_y >= floor_y+5){
     if(v_y >=0){
@@ -179,10 +197,16 @@ static void draw_player(void){
     glColorMaterial(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE);
     glEnable(GL_COLOR_MATERIAL);
     glPushMatrix();
-    glColor4f(1,1,0,1);
+    if(double_points){
+      glColor4f(0.2,1,0.2,1);
+    }else{
+      glColor4f(1,1,0,1);
+    }
     glTranslatef(player_x,player_y,0);
     glRotatef(self_rotate,0,0,1);
-    self_rotate += 1;
+    if(rotate_flag == 1){
+      self_rotate += 1;
+    }
     glScalef(1,1,1);
     glutSolidCube(1);
     // GLfloat diffuse_coeffs[] = {1,1,1,0};
@@ -199,9 +223,9 @@ static void init_platforms(int number){
   int r;
   for(i=1;i<number;i++){
     r = rand()%100;
-    if(r <= 33){
+    if(r <= 50){
       platforme[i].type = 0;
-    } else if(r <= 66){
+    } else if(r <= 75){
       platforme[i].type = 1;
     }
     else{
@@ -256,7 +280,7 @@ int bounce_check(int plat_num){
   float plat_y = platforme[plat_num].plat_y;
   if(player_y <= plat_y+0.7 && player_y >= plat_y-0.7){
     if(player_x >= plat_x - 2 && player_x <= plat_x+2){
-      if(v_y <= 0 && plat_y <= 4){ //FIX
+      if(v_y <= 0 && plat_y<=9){ //FIX
         floor_y = plat_y;
         // printf("%s\n","GORE!" );
         // printf("%f\n",floor_y);
