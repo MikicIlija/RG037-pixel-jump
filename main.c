@@ -3,9 +3,10 @@
 #include <GL/glut.h>
 #include<stdio.h>
 
-#define RED 0
+#define RED 3
 #define GREEN 1
 #define BLUE 2
+#define BLACK 0
 #define TIMER_ID 0
 #define TIMER_INTERVAL 20
 #define MOVEMENT_SPEED 0.1 // brzina kratanja
@@ -159,8 +160,11 @@ static void on_timer(int value){
         else{
           rotate_flag = 1;
         }
-      }else if(platforme[i].type == GREEN){ //odbijanje od zelene platforme pali double poits mod za naredne 5 odskakanja
-        double_points = 5;
+      }else if(platforme[i].type == GREEN){ //odbijanje od zelene platforme pali double poits mod za naredna 3 odskakanja
+        double_points = 3;
+      }
+      else if(platforme[i].type == RED){
+        platforme[i].plat_x = -5 + rand() % 10;
       }
     }
   }
@@ -236,18 +240,20 @@ static void init_platforms(int number){
   //inicijalizujemo prvu platformu
   platforme[0].plat_x = -5 + rand() % 10;
   platforme[0].plat_y = -5;
-  platforme[0].type = rand() % 3;
+  platforme[0].type = rand() % 4;
   int r;
   //nasumicno dodeljujemo mod platfomama
   for(i=1;i<number;i++){
     r = rand()%100;
     if(r <= 50){
-      platforme[i].type = RED;
+      platforme[i].type = BLACK;
     } else if(r <= 70){
-      platforme[i].type = GREEN;
+      platforme[i].type = RED;
     }
-    else{
+    else if(r <= 85){
       platforme[i].type = BLUE;
+    }else{
+      platforme[i].type = GREEN;
     }
     //nasumicno odredjujemo pozicije platfomi
     platforme[i].plat_x = -6 + rand() % 12 ;
@@ -283,6 +289,9 @@ static void draw_platform(int number){
       // diffuse_coeffs[3] = 1;
       glColor4f(0.2,0.2,1,1);
     }
+    else if(platforme[i].type == BLACK){
+      glColor4f(0,0,0,1);
+    }
     glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_coeffs);
     glTranslatef(platforme[i].plat_x,platforme[i].plat_y,0);
     glScalef(4,0.2,1);
@@ -316,7 +325,7 @@ static void progres(){
     if(platforme[i].plat_y <= -8){
       platforme[i].plat_x = -5 + rand()%10;
       platforme[i].plat_y += 5*number_of_platforms;
-      platforme[i].type = rand() % 3;
+      platforme[i].type = rand() % 4;
     }
   }
 }
