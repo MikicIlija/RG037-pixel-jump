@@ -2,6 +2,8 @@
 #include <time.h>
 #include <GL/glut.h>
 #include<stdio.h>
+#include<math.h>
+#include<string.h>
 
 #define RED 3
 #define GREEN 1
@@ -14,30 +16,29 @@
 static int window_width, window_height;
 
 static float player_x,player_y; // tekuce koordinate centra kvadrata
-float self_rotate;
-float floor_y = -8;
+float self_rotate; // parametar za rotaciju igraca
+float floor_y = -8; // trenutna y koordinata poda
 static float v_x,v_y; //smer kretanja
 static int animation_ongoing; //fleg koji pokazduje da li je animacia u toku
-static void draw_player(void);
-static void draw_platform(int number);
-static void init_platforms(int number);
-static void setup_lights(void);
-static int bounce_check(int plat_num);
-int number_of_platforms;
-static void progres(void);
-int score;
-int rotate_flag = 0;
-int double_points = 0;
-int double_points_counter;
-int level_up = 100;
-int lvluped = 0;
+static void draw_player(void); //funkcija za crtanje igraca
+static void draw_platform(int number); //funkcija za crtanje platformi
+static void init_platforms(int number); //odradjuju se parametri platfomi
+static void setup_lights(void); //funkcija koja postavlja svetla
+static void display_text(const char *text,int length , int x , int y); // funkcija ispisuje tekst na prozoru
+static int bounce_check(int plat_num); //fukncija koja proverava koliziju
+static void progres(void); //funkcija simulira kretanje kroz mapu
+int number_of_platforms; //trenutni broj platformi koje iscrtavamo
+int score; //trenutni rezultat
+int rotate_flag = 0; //flag za rotaciju
+int double_points = 0; //flag za duple poene
+int level_up = 100; //flag za level up
+int level_number = 0; //trenutni level
 
 typedef struct{
   float plat_x;
   float plat_y;
-  int type; //GREEN BLUE RED
+  int type; //TIP PLATFORME RED GREEN BLUE BLACK
 }Platform;
-
 
 //inicijalizacija platformi
 Platform platforme[5];
@@ -59,10 +60,6 @@ int main(int argc,char** argv){
   glutCreateWindow(argv[0]);
 
   //Registruju se funkcije za obradu dogadjaja
-      // diffuse_coeffs[0] = 0.1;
-      // diffuse_coeffs[1] = 0.1;
-      // diffuse_coeffs[2] = 1;
-      // diffuse_coeffs[3] = 1;;
   glutKeyboardFunc(on_keyboard);
   glutReshapeFunc(on_reshape);
   glutDisplayFunc(on_display);
@@ -72,6 +69,7 @@ int main(int argc,char** argv){
   player_x = 0;
   player_y = floor_y;
 
+  //Na pocetku se igrac ne rotira
   self_rotate=0;
 
   //inicijalizacija smera kretanja
@@ -118,18 +116,22 @@ static void on_keyboard(unsigned char key,int x,int y){
     break;
   case 'a':
   case 'A':
+    //na slovo A se krecemo u levo
     player_x -= v_x;
+    //ukoliko dodjemo do ivice pojavljujemo se na drugoj strani
     if (player_x <= -8) {
       player_x = 8;
     }
     break;
   case 'd':
   case 'D':
+    //na slovo D se krecemo u desno
     player_x += v_x;
+    //ukoliko dodjemo do ivice pojavljujemo se na drugoj strani
     if (player_x >= 8){
        player_x = -8;
     }
-
+    break;
   }
 
 }
@@ -142,17 +144,14 @@ static void on_timer(int value){
   // azuriramo koordinate igraca
   player_y += v_y;
   int i;
-
   for(i=0;i<number_of_platforms;i++){
     if(bounce_check(i) == 1){
       //racunamo trenutni rezultat u ondosu na mod u kome smo
       if(double_points){
         score+=(platforme[i].type+1)*2;
-        printf("SCORE:%d\n",score);
         double_points--;
       }else{
         score+=platforme[i].type+1;
-        printf("SCORE:%d\n",score);
       }
       if(platforme[i].type == BLUE){ //odskakanje od plave platfome pokrece/zaustavlja rotaciju
         if(rotate_flag == 1){
@@ -161,19 +160,18 @@ static void on_timer(int value){
         else{
           rotate_flag = 1;
         }
-      }else if(platforme[i].type == GREEN){ //odbijanje od zelene platforme pali double poits mod za naredna 3 odskakanja
+      }else if(platforme[i].type == GREEN){ //odskakanje od zelene platforme pali double poits mod za naredna 3 odskakanja
         double_points = 3;
       }
-      else if(platforme[i].type == RED){
+      else if(platforme[i].type == RED){ //odskakanje od crvene platforme je pomera po x osi
         platforme[i].plat_x = -5 + rand() % 10;
       }
     }
   }
+  //kada dostignemo maximalnu visinu skoka krece padanje
   if (player_y >= floor_y+5){
     if(v_y >=0){
      v_y *= -1;
-     // printf("%f pozi\n",player_y);
-     // printf("%s\n","DOLE!");
    }
   }
 
@@ -184,23 +182,26 @@ static void on_timer(int value){
   if(player_y < -10){ //ako igrac ispadne iz prozora zaustavlja se igra
     printf("%s\n","GAME OVER!");
     animation_ongoing = 0;
+    glClearColor(0.75,0.75,0.75,0);
   }
 
+  //kada dostignemo odredjeni rezultat podize se nivo igre
   if(score >= level_up){
     srand(time(NULL));
+    //smanjuje se broj platformi
     number_of_platforms = number_of_platforms-1;
     init_platforms(number_of_platforms);
     level_up = level_up + 100;
-    lvluped ++;
+    level_number ++;
     printf("%s\n","LEVEL UP!!" );
-    if(lvluped == 1){
+    if(level_number == 1){
       glClearColor(0.8,0.5,0.5,0);
     }
-    else if(lvluped == 2){
-      glClearColor(0.5,0.8,0.5,0);
+    else if(level_number == 2){
+      glClearColor(0.5,0.5,0.8,0);
     }
     else{
-      glClearColor(0.5,0.5,0.8,0);
+      glClearColor(0.5,0.8,0.5,0);
     }
   }
 
@@ -234,7 +235,7 @@ static void draw_player(void){
     }
     //pomeramo igraca na svoju poziciju
     glTranslatef(player_x,player_y,0);
-    //
+    //rotiramo igraca za dati parametar
     glRotatef(self_rotate,0,0,1);
     if(rotate_flag == 1){
       self_rotate += 1;
@@ -265,7 +266,7 @@ static void init_platforms(int number){
     }else{
       platforme[i].type = GREEN;
     }
-    //nasumicno odredjujemo pozicije platfomi
+    //nasumicno odredjujemo pozicije platformi
     platforme[i].plat_x = -6 + rand() % 12 ;
     platforme[i].plat_y =  platforme[i-1].plat_y + number;
   }
@@ -277,32 +278,18 @@ static void draw_platform(int number){
   int i;
   for(i=0;i<number;i++){
     glPushMatrix();
-    // GLsfloat diffuse_coeffs[4];
     if(platforme[i].type == RED){
-      // diffuse_coeffs[3] = 1;
-      // diffuse_coeffs[0] = 1;
-      // diffuse_coeffs[1] = 0.1;
-      // diffuse_coeffs[2] = 0.1;
       glColor4f(1,0.2,0.2,1);
     }
     else if(platforme[i].type == GREEN){
-      // diffuse_coeffs[0] = 0.1;
-      // diffuse_coeffs[1] = 1;
-      // diffuse_coeffs[2] = 0.1;
-      // diffuse_coeffs[3] = 1;
       glColor4f(0.2,1,0.2,1);
     }
     else if(platforme[i].type == BLUE){
-      // diffuse_coeffs[0] = 0.1;
-      // diffuse_coeffs[1] = 0.1;
-      // diffuse_coeffs[2] = 1;
-      // diffuse_coeffs[3] = 1;
       glColor4f(0.2,0.2,1,1);
     }
     else if(platforme[i].type == BLACK){
       glColor4f(0,0,0,1);
     }
-    // glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_coeffs);
     glTranslatef(platforme[i].plat_x,platforme[i].plat_y,0);
     glScalef(4,0.2,1);
     glutSolidCube(1);
@@ -315,10 +302,8 @@ int bounce_check(int plat_num){
   float plat_y = platforme[plat_num].plat_y;
   if(player_y <= plat_y+0.7 && player_y >= plat_y-0.7){
     if(player_x >= plat_x - 2 && player_x <= plat_x+2){
-      if(v_y <= 0 && plat_y<=9){ //FIX
+      if(v_y <= 0 && plat_y<=9){
         floor_y = plat_y;
-        // printf("%s\n","GORE!" );
-        // printf("%f\n",floor_y);
         v_y *= -1;
         return 1;
       }
@@ -327,22 +312,78 @@ int bounce_check(int plat_num){
   return 0;
 }
 
-static void progres(){
+static void progres(){ //simuliramo prolazak kroz mapu
   int i;
   srand(time(NULL));
   for(i=0;i<number_of_platforms;i++){
     if(player_y >= 5){
-      platforme[i].plat_y -= 0.08 + lvluped * 0.005;
+      platforme[i].plat_y -= 0.08 + level_number * 0.005;
     }else{
-      platforme[i].plat_y -= 0.045 + lvluped * 0.005;
+      platforme[i].plat_y -= 0.045 + level_number * 0.005;
     }
     if(platforme[i].plat_y <= -8){
       platforme[i].plat_x = -5 + rand()%10;
-        platforme[i].plat_y += 5*number_of_platforms - (lvluped*2-1);
+        platforme[i].plat_y += 5*number_of_platforms - (level_number*2-1);
       platforme[i].type = rand() % 4;
     }
 
   }
+}
+
+static void display_text(const char *text,int length , int x , int y) {
+    if(player_y < -8){
+        text = "GAME OVER \0";
+        length = 10;
+        x = 450/2;
+        y = 600/2;
+    }
+
+    if((score >= 100 && score <= 105) || (score >= 200 && score <= 205) || (score >= 300 && score <= 305)){
+      text = "LEVEL UP!!! SCORE: \0";
+      length = 10;
+      x = 450/2;
+      y = 600/2;
+    }
+    if(score==0 && player_y >= -8){
+        text = "SCORE: 0\0";
+        length = 8;
+    }
+
+
+    glMatrixMode(GL_PROJECTION);
+    double matrix[16];
+    glGetDoublev(GL_PROJECTION_MATRIX,matrix);
+    glLoadIdentity();
+    glOrtho(0,600,0,450,-5,5);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glPushMatrix();
+    glLoadIdentity();
+    glRasterPos2i(x,y);
+
+    for ( int i = 0 ; i < length ; i++)
+        glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18,(int)text[i]);
+
+    int num = floor(log10(abs(score))) + 1;
+    char str[20];
+    sprintf(str, "%d", score);
+
+    if(player_y >= -8){
+        for ( int i = 0 ; i < num ; i++)
+            glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18,(int)str[i]);
+    } else {
+        char *final_score = "Final Score: ";
+        glRasterPos2i(x,y-15);
+        for ( int i = 0 ; i < strlen(final_score) ; i++)
+            glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18,(int)final_score[i]);
+        for ( int i = 0 ; i < num ; i++)
+            glutBitmapCharacter( GLUT_BITMAP_HELVETICA_18,(int)str[i]);
+    }
+
+    glPopMatrix();
+    glMatrixMode(GL_PROJECTION);
+    glLoadMatrixd(matrix);
+    glMatrixMode(GL_MODELVIEW);
 }
 
 static void setup_lights(void){
@@ -402,12 +443,14 @@ static void on_display(void){
   //podesvamo svetla
   setup_lights();
 
-
   //postavljamo platforme
   draw_platform(number_of_platforms);
 
   //crtamo igraca
   draw_player();
+
+  //crtamo tekst
+  display_text("SCORE: \0", 10, 450, 420);
 
   //Menja se slika na ekranu
   glutSwapBuffers();
