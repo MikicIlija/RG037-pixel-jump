@@ -29,7 +29,8 @@ int score;
 int rotate_flag = 0;
 int double_points = 0;
 int double_points_counter;
-int level_up = 50;
+int level_up = 100;
+int lvluped = 0;
 
 typedef struct{
   float plat_x;
@@ -176,7 +177,7 @@ static void on_timer(int value){
    }
   }
 
-  if(player_y >= -6 && v_y >= 0){ //pokrecemo kretanje kroz svet
+  if(player_y >= -6){ //pokrecemo kretanje kroz svet
       progres();
   }
 
@@ -189,9 +190,18 @@ static void on_timer(int value){
     srand(time(NULL));
     number_of_platforms = number_of_platforms-1;
     init_platforms(number_of_platforms);
-    level_up = level_up + 50;
+    level_up = level_up + 100;
+    lvluped ++;
     printf("%s\n","LEVEL UP!!" );
+    if(lvluped == 1){
       glClearColor(0.8,0.5,0.5,0);
+    }
+    else if(lvluped == 2){
+      glClearColor(0.5,0.8,0.5,0);
+    }
+    else{
+      glClearColor(0.5,0.5,0.8,0);
+    }
   }
 
 
@@ -267,12 +277,12 @@ static void draw_platform(int number){
   int i;
   for(i=0;i<number;i++){
     glPushMatrix();
-    GLfloat diffuse_coeffs[4];
+    // GLsfloat diffuse_coeffs[4];
     if(platforme[i].type == RED){
+      // diffuse_coeffs[3] = 1;
       // diffuse_coeffs[0] = 1;
       // diffuse_coeffs[1] = 0.1;
       // diffuse_coeffs[2] = 0.1;
-      // diffuse_coeffs[3] = 1;
       glColor4f(1,0.2,0.2,1);
     }
     else if(platforme[i].type == GREEN){
@@ -292,7 +302,7 @@ static void draw_platform(int number){
     else if(platforme[i].type == BLACK){
       glColor4f(0,0,0,1);
     }
-    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_coeffs);
+    // glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_coeffs);
     glTranslatef(platforme[i].plat_x,platforme[i].plat_y,0);
     glScalef(4,0.2,1);
     glutSolidCube(1);
@@ -321,12 +331,17 @@ static void progres(){
   int i;
   srand(time(NULL));
   for(i=0;i<number_of_platforms;i++){
-    platforme[i].plat_y -= 0.1;
+    if(player_y >= 5){
+      platforme[i].plat_y -= 0.08 + lvluped * 0.005;
+    }else{
+      platforme[i].plat_y -= 0.045 + lvluped * 0.005;
+    }
     if(platforme[i].plat_y <= -8){
       platforme[i].plat_x = -5 + rand()%10;
-      platforme[i].plat_y += 5*number_of_platforms;
+        platforme[i].plat_y += 5*number_of_platforms - (lvluped*2-1);
       platforme[i].type = rand() % 4;
     }
+
   }
 }
 
