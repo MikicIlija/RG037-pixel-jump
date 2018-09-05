@@ -22,7 +22,7 @@ static float v_x,v_y; //smer kretanja
 static int animation_ongoing; //fleg koji pokazduje da li je animacia u toku
 static void draw_player(void); //funkcija za crtanje igraca
 static void draw_platform(int number); //funkcija za crtanje platformi
-static void init_platforms(int number); //odradjuju se parametri platfomi
+static void init_platforms(int number,char* path); //odradjuju se parametri platfomi
 static void setup_lights(void); //funkcija koja postavlja svetla
 static void display_text(const char *text,int length , int x , int y); // funkcija ispisuje tekst na prozoru
 static int bounce_check(int plat_num); //fukncija koja proverava koliziju
@@ -33,6 +33,7 @@ int rotate_flag = 0; //flag za rotaciju
 int double_points = 0; //flag za duple poene
 int level_up = 100; //flag za level up
 int level_number = 0; //trenutni level
+char* path;
 
 typedef struct{
   float plat_x;
@@ -86,8 +87,19 @@ int main(int argc,char** argv){
   number_of_platforms = 5; //pocetni broj platformi
   score = 0; //inicijalizujemo rezultat
 
+
+  //proveravamo da li je zadato ime fajla
+  if(argc < 2){
+    printf("Morate zadati ime fajla po kome se generisu platforme!\n");
+    exit(0);
+  }
+
+  //pamtimo ime fajla
+  path = argv[1];
+
+
   //inicijalizujemo platforme
-  init_platforms(number_of_platforms);
+  init_platforms(number_of_platforms,path);
 
 
   glutMainLoop();
@@ -153,7 +165,7 @@ static void on_timer(int value){
       }else{
         score+=platforme[i].type+1;
       }
-      if(platforme[i].type == BLUE){ //odskakanje od plave platfome pokrece/zaustavlja rotaciju
+      if(platforme[i].type == BLUE){ //odskakanje od plave platforme pokrece/zaustavlja rotaciju
         if(rotate_flag == 1){
           rotate_flag = 0;
         }
@@ -190,7 +202,7 @@ static void on_timer(int value){
     srand(time(NULL));
     //smanjuje se broj platformi
     number_of_platforms = number_of_platforms-1;
-    init_platforms(number_of_platforms);
+    init_platforms(number_of_platforms,path);
     level_up = level_up + 100;
     level_number ++;
     printf("%s\n","LEVEL UP!!" );
@@ -245,31 +257,27 @@ static void draw_player(void){
     glPopMatrix();
 }
 
-static void init_platforms(int number){
-  int i;
-  srand(time(NULL));
-  //inicijalizujemo prvu platformu
-  platforme[0].plat_x = -5 + rand() % 10;
-  platforme[0].plat_y = -5;
-  platforme[0].type = rand() % 4;
-  int r;
-  //nasumicno dodeljujemo mod platfomama
-  for(i=1;i<number;i++){
-    r = rand()%100;
-    if(r <= 50){
-      platforme[i].type = BLACK;
-    } else if(r <= 70){
-      platforme[i].type = RED;
-    }
-    else if(r <= 85){
-      platforme[i].type = BLUE;
-    }else{
-      platforme[i].type = GREEN;
-    }
-    //nasumicno odredjujemo pozicije platformi
-    platforme[i].plat_x = -6 + rand() % 12 ;
-    platforme[i].plat_y =  platforme[i-1].plat_y + number;
+static void init_platforms(int number,char* path){
+  //otvaramo falj stream
+  FILE *f = fopen(path,"r");
+  //proveravamo da li je fajl stream uspesno otvoren
+  if(f == NULL){
+    printf("%s\n", "Neuspelo otvaranje fajla!");
+    exit(0);
   }
+  float value;
+  int i;
+  //citamo vrednosti iz fajla i dodeljujemo ih platformama
+  for(i=0;i<number_of_platforms;i++){
+    fscanf(f,"%f",&value);
+    platforme[i].plat_x = value;
+    fscanf(f,"%f",&value);
+    platforme[i].plat_y = value;
+    fscanf(f,"%f",&value);
+    platforme[i].type = value;
+  }
+  //zatvaramo fajl stream
+  fclose(f);
 }
 
 static void draw_platform(int number){
