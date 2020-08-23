@@ -21,7 +21,7 @@ Green         | You gain x2 points the next 3 jumps | +2 points
 Blue          | Starts/stops player rotation | +3 points
 Red           | Platfom moves | +4 points
 
-![Alt Text](https://github.com/MATF-RG17/RG037-pixel-jump/blob/master/Screenshots/pixel_jump.gif?raw=true)
+![Alt Text](https://github.com/MikicIlija/RG037-pixel-jump/blob/master/Screenshots/pixel_jump.gif?raw=true)
 
 
 
